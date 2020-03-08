@@ -269,6 +269,25 @@ export function validateComponentName (name: string) {
 }
 
 /**
+ * props 数据规范化
+ * 
+ * m1:
+ * props: ['name']
+ * 
+ * m2: 
+ * props: {
+ *     name: String, // [String, Number]
+ * }
+ *
+ * m3: 
+ * props: {
+ *   name:{
+ *     type: String
+ *   }
+ * }
+ * 
+ * 转换后的对象: m3
+ * 
  * Ensure all props option syntax are normalized into the
  * Object-based format.
  */
@@ -293,6 +312,7 @@ function normalizeProps (options: Object, vm: ?Component) {
       val = props[key]
       name = camelize(key)
       res[name] = isPlainObject(val)
+      // 如果是 m3 写法, 就直接 val 复制
         ? val
         : { type: val }
     }

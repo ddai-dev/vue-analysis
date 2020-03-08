@@ -13,6 +13,13 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
+  /* 
+  * 合并配置
+  * 初始化生命周期 
+  * 初始化事件中心
+  * 初始化渲染
+  * 初始化 (data props computed watcher)
+  */
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
@@ -54,6 +61,7 @@ export function initMixin (Vue: Class<Component>) {
     initRender(vm)
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+    // 初始化 (data props computed watcher)
     initState(vm)
     initProvide(vm) // resolve provide after data/props
     callHook(vm, 'created')
