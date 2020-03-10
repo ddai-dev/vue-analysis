@@ -399,19 +399,24 @@ export function mergeOptions (
   normalizeInject(child, vm)
   normalizeDirectives(child)
   const extendsFrom = child.extends
+
+  // 递归把 extends 合并到 parent
   if (extendsFrom) {
     parent = mergeOptions(parent, extendsFrom, vm)
   }
+  // 递归把 mixins 合并到 parent
   if (child.mixins) {
     for (let i = 0, l = child.mixins.length; i < l; i++) {
       parent = mergeOptions(parent, child.mixins[i], vm)
     }
   }
+  // 创建一个空对象options, 遍历 parent，把parent中的每一项通过调用 mergeField函数合并到空对象options
   const options = {}
   let key
   for (key in parent) {
     mergeField(key)
   }
+  // 接着再遍历 child，把存在于child里但又不在 parent中 的属性继续调用 mergeField函数合并到空对象options里
   for (key in child) {
     if (!hasOwn(parent, key)) {
       mergeField(key)

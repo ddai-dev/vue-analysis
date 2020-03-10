@@ -48,6 +48,14 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
+  /**
+   * 根据 VNode 来进行更新
+   * 
+   * vm.__patch__  src/platforms/web/runtime/index.js 
+   *    createPatchFunction({ nodeOps, modules }) src/platforms/web/runtime/patch.js
+   * 
+   * Vue.prototype.__patch__ = inBrowser ? patch : noop weex 不适用 patch ，不同的平台使用不同的定义
+   * */ 
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
@@ -131,16 +139,32 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * 实例化一个渲染 Watcher, 在它的回调函数中会执行 updateComponent 
+ *    -> updateComponent (调用 vm._render 方法, 先生成虚拟节点 node)
+ *    -> 最终调用 vm._update 更新 DOM 
+ * 
+ * Watcher 作用
+ *    - 在初始化的时候执行回调函数 
+ *    - 当 vm 实例中监测到数据的变化的时候执行
+ * @param {*} vm 
+ * @param {*} el 
+ * @param {*} hydrating 
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,
   hydrating?: boolean
 ): Component {
+  // 缓存 el 到 vm.$el 上
   vm.$el = el
+  // 没有指定 render 函数 (到这里说明 render 都是统一被转换后了, 如果没有转换, 生成警告, dev 报错)
   if (!vm.$options.render) {
+    // 创建一个空节点
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
+      // 如果使用了 [template | el] 但是又使用了 runtime-only(生产版本, 是不包含模板编译的) 版本的 vue  就会报警告
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
         warn(
@@ -150,6 +174,7 @@ export function mountComponent (
           vm
         )
       } else {
+        // template render el 都没有传递, 就报错 
         warn(
           'Failed to mount component: template or render function not defined.',
           vm
@@ -179,7 +204,9 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    // 在 Watcher 被调用的时候, 来更新组件的视图
     updateComponent = () => {
+      // vm._render() 渲染出来一个 VNode (src/core/instance/render.js)
       vm._update(vm._render(), hydrating)
     }
   }
@@ -187,6 +214,9 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // 两个作用:
+    // 一个是初始化的时候会执行回调函数
+    // 另一个是当 vm 实例中的监测的数据发生变化的时候执行回调函数
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted) {
@@ -198,6 +228,8 @@ export function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
+  // 数最后判断为根节点的时候设置 vm._isMounted 为 true， 表示这个实例已经挂载了，同时执行 mounted 钩子函数
+  // vm.$vnode 表示 Vue 实例的父 VNode，所以它为 Null 则表示当前是根 Vue 的实例
   if (vm.$vnode == null) {
     vm._isMounted = true
     callHook(vm, 'mounted')
@@ -312,6 +344,9 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+/**
+ * 
+ */
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()

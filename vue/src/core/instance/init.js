@@ -42,7 +42,10 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      // src/core/util/options.js
       vm.$options = mergeOptions(
+        // 简单理解为返回 vm.constructor.options (Vue.options 在 initGlobalAPI(Vue)的时候定义的 ) 
+        // src/core/global-api/index.js
         resolveConstructorOptions(vm.constructor),
         options || {},
         vm
@@ -50,21 +53,22 @@ export function initMixin (Vue: Class<Component>) {
     }
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
+      // 在 dev 环境中, 目的就是产生一些警告
       initProxy(vm)
     } else {
+      // 生产环境
       vm._renderProxy = vm
     }
     // expose real self
     vm._self = vm
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
-    callHook(vm, 'beforeCreate')
-    initInjections(vm) // resolve injections before data/props
-    // 初始化 (data props computed watcher)
-    initState(vm)
-    initProvide(vm) // resolve provide after data/props
-    callHook(vm, 'created')
+    initLifecycle(vm) // 初始化生命周期
+    initEvents(vm)  // 初始化事件
+    initRender(vm)  // 初始化渲染
+    callHook(vm, 'beforeCreate')  // 调用生命周期钩子函数
+    initInjections(vm) // resolve injections before data/props  初始化injections
+    initState(vm)  // 初始化 props,methods,data,computed,watch
+    initProvide(vm) // resolve provide after data/props // 初始化 provide
+    callHook(vm, 'created')  // 调用生命周期钩子函数
 
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -73,7 +77,17 @@ export function initMixin (Vue: Class<Component>) {
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
+    // 在所有的初始化工作完成以后
+    // 是否传入了 el 选项
+    // - 是: 则调用 $mount 函数进入模板编译与挂载阶段
+    // - 否: 需要用户手动调用  vm.$mount 方法才进入下一个生命周期阶段
     if (vm.$options.el) {
+      // $mount 方法在多个文件中都有定义
+      //  - src/platform/web/entry-runtime-with-compiler.js
+      //  - src/platform/web/runtime/index.js
+      //  - src/platform/weex/runtime/index.js
+      // $mount 这个方法的实现是和平台、构建方式都相关的
+      // src/platforms/web/runtime/index.js -> Vue.prototype.$mount
       vm.$mount(vm.$options.el)
     }
   }

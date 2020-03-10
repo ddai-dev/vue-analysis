@@ -8,6 +8,7 @@ let uid = 0
 /**
  * A dep is an observable that can have multiple
  * directives subscribing to it.
+ * 依赖管理器
  */
 export default class Dep {
   static target: ?Watcher;
@@ -19,20 +20,25 @@ export default class Dep {
     this.subs = []
   }
 
+  // 增加
   addSub (sub: Watcher) {
     this.subs.push(sub)
   }
 
+  // 删除
   removeSub (sub: Watcher) {
     remove(this.subs, sub)
   }
 
+  // 在属性 getter 的时候调用, 来添加依赖
   depend () {
     if (Dep.target) {
+      // 转了一个圈, 最终还是会调用  addSub 方法, 增加观察者
       Dep.target.addDep(this)
     }
   }
 
+  // 通知
   notify () {
     // stabilize the subscriber list first
     const subs = this.subs.slice()

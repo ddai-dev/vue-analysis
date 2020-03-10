@@ -33,6 +33,14 @@ export function toggleObserving (value: boolean) {
  * object. Once attached, the observer converts the target
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
+ * Observer类会通过递归的方式把一个对象的所有属性都转化成可观测对象
+ * 
+ * 整体流程如下
+ * 1. Data通过observer转换成了getter/setter的形式来追踪变化
+ * 2. 当外界通过Watcher读取数据时，会触发getter从而将Watcher添加到依赖中
+ * 3. 当数据发生了变化时，会触发setter，从而向Dep中的依赖（即Watcher）发送通知
+ * 4. Watcher接收到通知后，会向外界发送通知，变化通知到外界后可能会触发视图更新，也有可能触发用户的某个回调函数等
+ * 
  */
 export class Observer {
   value: any;
@@ -43,6 +51,8 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // 给value新增一个__ob__属性，值为该value的Observer实例
+    // 相当于为value打上标记，表示它已经被转化成响应式了，避免重复操作
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       const augment = hasProto
@@ -51,6 +61,7 @@ export class Observer {
       augment(value, arrayMethods, arrayKeys)
       this.observeArray(value)
     } else {
+      // 对象类型
       this.walk(value)
     }
   }
@@ -130,6 +141,10 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 
 /**
  * Define a reactive property on an Object.
+ * 使一个对象转化成可观测对象
+ * 数据成为可观察对象后， 我们就知道数据什么时候发生变化 -> 更新视图 (视图中谁用了这个属性, 就更新谁)
+ * 在getter中收集依赖，在setter中通知依赖更新
+ * 我们为每一个属性都建立了一个依赖管理器 (这里是循环调用的, 所以对象里面的每一个属性都含有 dep)
  */
 export function defineReactive (
   obj: Object,
@@ -138,27 +153,35 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // 依赖管理器
   const dep = new Dep()
 
+  // 如果属性是不可以修改的, 那么久不能进行配置, 直接返回
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
   }
 
   // cater for pre-defined getter/setters
+  // 从属性中获取 getter 和 setter
   const getter = property && property.get
   const setter = property && property.set
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
 
+  // 如果 shallow = false 不是浅拷贝, 那么就递归观察所有对象
   let childOb = !shallow && observe(val)
+  // 对每个 key 都通过 reactiveGetter  reactiveSetter 来获取值或者设置值 
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
+      // 谁调用 get 就说明谁会依赖这个属性, 这个时候, 就可以收集依赖
       const value = getter ? getter.call(obj) : val
+      // 如果 Dep.target 设置了对象的 Watcher, 那么添加
       if (Dep.target) {
+        // 订阅
         dep.depend()
         if (childOb) {
           childOb.dep.depend()
@@ -170,6 +193,7 @@ export function defineReactive (
       return value
     },
     set: function reactiveSetter (newVal) {
+      //  数据变化, 会触发 setter, 所以这里就通知 Watcher 数据发生了变化
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
       if (newVal === value || (newVal !== newVal && value !== value)) {
@@ -185,6 +209,7 @@ export function defineReactive (
         val = newVal
       }
       childOb = !shallow && observe(newVal)
+      // 通知
       dep.notify()
     }
   })

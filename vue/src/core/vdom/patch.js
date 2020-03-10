@@ -31,6 +31,7 @@ import {
 export const emptyNode = new VNode('', {}, [])
 
 const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
+// 创建节点 删除节点 更新节点
 
 function sameVnode (a, b) {
   return (
@@ -67,10 +68,15 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
   return map
 }
 
+/**
+ * createPatchFunction 内部定义了一系列的辅助方法，最终返回了一个 patch 方法，这个方法就赋值给了 vm._update 函数里调用的 vm.__patch__
+ */
 export function createPatchFunction (backend) {
   let i, j
   const cbs = {}
 
+  // nodeOps是Vue为了跨平台兼容性，对所有节点操作进行了封装
+  // nodeOps.createTextNode()在浏览器端等同于document.createTextNode()
   const { modules, nodeOps } = backend
 
   for (i = 0; i < hooks.length; ++i) {
@@ -96,11 +102,14 @@ export function createPatchFunction (backend) {
     return remove
   }
 
+  /**
+   *  删除节点
+   */
   function removeNode (el) {
     const parent = nodeOps.parentNode(el)
     // element may have already been removed due to v-html / v-text
-    if (isDef(parent)) {
-      nodeOps.removeChild(parent, el)
+    if (isDef(parent)) { // 获取父节点
+      nodeOps.removeChild(parent, el) // 调用父节点的removeChild方法
     }
   }
 
@@ -131,6 +140,7 @@ export function createPatchFunction (backend) {
     ownerArray,
     index
   ) {
+    // isDef 元素是否定义
     if (isDef(vnode.elm) && isDef(ownerArray)) {
       // This vnode was used in a previous render!
       // now it's used as a new node, overwriting its elm would cause
@@ -148,7 +158,7 @@ export function createPatchFunction (backend) {
     const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
-    if (isDef(tag)) {
+    if (isDef(tag)) { // 有 tag 属性即认为是元素节点
       if (process.env.NODE_ENV !== 'production') {
         if (data && data.pre) {
           creatingElmInVPre++
@@ -164,8 +174,8 @@ export function createPatchFunction (backend) {
       }
 
       vnode.elm = vnode.ns
-        ? nodeOps.createElementNS(vnode.ns, tag)
-        : nodeOps.createElement(tag, vnode)
+        ? nodeOps.createElementNS(vnode.ns, tag) 
+        : nodeOps.createElement(tag, vnode) // 创建元素节点
       setScope(vnode)
 
       /* istanbul ignore if */
@@ -188,22 +198,22 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
-        createChildren(vnode, children, insertedVnodeQueue)
+        createChildren(vnode, children, insertedVnodeQueue) // 创建元素节点的子节点
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
-        insert(parentElm, vnode.elm, refElm)
+        insert(parentElm, vnode.elm, refElm) // 插入到DOM中
       }
 
       if (process.env.NODE_ENV !== 'production' && data && data.pre) {
         creatingElmInVPre--
       }
-    } else if (isTrue(vnode.isComment)) {
+    } else if (isTrue(vnode.isComment)) { // 创建注释节点
       vnode.elm = nodeOps.createComment(vnode.text)
-      insert(parentElm, vnode.elm, refElm)
+      insert(parentElm, vnode.elm, refElm) // 插入到 DOM 中
     } else {
-      vnode.elm = nodeOps.createTextNode(vnode.text)
-      insert(parentElm, vnode.elm, refElm)
+      vnode.elm = nodeOps.createTextNode(vnode.text) // 创建文本节点
+      insert(parentElm, vnode.elm, refElm)  // 插入到DOM中
     }
   }
 
@@ -269,6 +279,12 @@ export function createPatchFunction (backend) {
     insert(parentElm, vnode.elm, refElm)
   }
 
+  /**
+   * 插入到当前元素节点里面，最后把当前元素节点插入到DOM中
+   * @param {*} parent 
+   * @param {*} elm 
+   * @param {*} ref 
+   */ 
   function insert (parent, elm, ref) {
     if (isDef(parent)) {
       if (isDef(ref)) {
@@ -498,7 +514,14 @@ export function createPatchFunction (backend) {
     }
   }
 
+  /**
+   * 静态节点
+   * <p>我是不会变化的文字</p> 没有任变量, 不管数据怎么变化, 只要这个节点第一次渲染了，那么它以后就永远不会发生变化
+   *
+   * 更新节点
+   */
   function patchVnode (oldVnode, vnode, insertedVnodeQueue, removeOnly) {
+    // vnode与oldVnode是否完全一样？若是，退出程序
     if (oldVnode === vnode) {
       return
     }
@@ -518,6 +541,7 @@ export function createPatchFunction (backend) {
     // note we only do this if the vnode is cloned -
     // if the new node is not cloned it means the render functions have been
     // reset by the hot-reload-api and we need to do a proper re-render.
+    // vnode与oldVnode是否都是静态节点？若是，退出程序
     if (isTrue(vnode.isStatic) &&
       isTrue(oldVnode.isStatic) &&
       vnode.key === oldVnode.key &&
@@ -539,18 +563,34 @@ export function createPatchFunction (backend) {
       for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode)
       if (isDef(i = data.hook) && isDef(i = i.update)) i(oldVnode, vnode)
     }
+    // vnode有text属性？若没有：
     if (isUndef(vnode.text)) {
+      // vnode的子节点与oldVnode的子节点是否都存在？
       if (isDef(oldCh) && isDef(ch)) {
+        // 若都存在，判断子节点是否相同，不同则更新子节点
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
+        // 若只有vnode的子节点存在
       } else if (isDef(ch)) {
+         /**
+          * 判断oldVnode是否有文本？
+          * 若没有，则把vnode的子节点添加到真实DOM中
+          * 若有，则清空Dom中的文本，再把vnode的子节点添加到真实DOM中
+          */
         if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
+         // 若只有oldnode的子节点存在
       } else if (isDef(oldCh)) {
+         // 清空DOM中的子节点
         removeVnodes(elm, oldCh, 0, oldCh.length - 1)
+        // 若vnode和oldnode都没有子节点，但是oldnode中有文本
       } else if (isDef(oldVnode.text)) {
+        // 清空oldnode文本
         nodeOps.setTextContent(elm, '')
       }
+       // 上面两个判断一句话概括就是，如果vnode中既没有text，也没有子节点，那么对应的oldnode中有什么就清空什么
+       // 若有，vnode的text属性与oldVnode的text属性是否相同？
     } else if (oldVnode.text !== vnode.text) {
+        // 若不相同：则用vnode的text替换真实DOM的文本
       nodeOps.setTextContent(elm, vnode.text)
     }
     if (isDef(data)) {
@@ -682,6 +722,12 @@ export function createPatchFunction (backend) {
     }
   }
 
+  /** 
+   * oldVnode: 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象
+   * vnode: 表示执行 _render 后返回的 VNode 的节点
+   * hydrating: 表示是否是服务端渲染
+   * removeOnly: 是给 transition-group 用的
+   */
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
@@ -732,6 +778,7 @@ export function createPatchFunction (backend) {
         const oldElm = oldVnode.elm
         const parentElm = nodeOps.parentNode(oldElm)
 
+        // createElm 的作用是通过虚拟节点创建真实的 DOM 并插入到它的父节点中
         // create new node
         createElm(
           vnode,

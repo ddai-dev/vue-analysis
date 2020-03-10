@@ -131,7 +131,7 @@ function initProps (vm: Component, propsOptions: Object) {
 
 function initData (vm: Component) {
   let data = vm.$options.data
-  // data 推荐函数, return Object
+  // data 推荐函数, return Object （如果是函数, 则调用 getData(data, vm) 执行返回一个对象
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -151,6 +151,7 @@ function initData (vm: Component) {
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
+      // 如果 methods 存在, 并且有 key , 则警告 (因为 key 在  data methods props 三者中唯一 )
       if (methods && hasOwn(methods, key)) {
         warn(
           `Method "${key}" has already been defined as a data property.`,
@@ -158,6 +159,7 @@ function initData (vm: Component) {
         )
       }
     }
+    // 如果 props 存在, 并且有 key , 则警告 (因为 key 在  data methods props 三者中唯一 )
     if (props && hasOwn(props, key)) {
       process.env.NODE_ENV !== 'production' && warn(
         `The data property "${key}" is already declared as a prop. ` +
@@ -165,10 +167,11 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 代理, 这里实现了 vm[key] -> vm._data[key] 的方式来实现数据代理 proxy
       proxy(vm, `_data`, key)
     }
   }
-  // observe data
+  // observe data 对初始化数据进行观察
   observe(data, true /* asRootData */)
 }
 

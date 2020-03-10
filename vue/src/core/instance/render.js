@@ -27,9 +27,17 @@ export function initRender (vm: Component) {
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
+  // 这个是编译 render 调用的函数
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
+  // render 函数调用该实例方法 (手写 render 函数调用)
+  // render(createElement) { createElement 就是 vm.$createElement 函数
+  //   return createElement('div', {
+  //    attrs: {
+  //      id: '#app'
+  //   }})
+  // }
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.
@@ -58,6 +66,9 @@ export function renderMixin (Vue: Class<Component>) {
     return nextTick(fn, this)
   }
 
+  /** 
+   * Vue 的 _render 方法是实例的一个私有方法，它用来把实例渲染成一个虚拟 Node 
+  */
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render, _parentVnode } = vm.$options
@@ -80,6 +91,8 @@ export function renderMixin (Vue: Class<Component>) {
     // render self
     let vnode
     try {
+      // vm._renderProxy(src/core/instance/init.js ) 在生产环境就是 vm 本身 
+      // vm.$createElement 方法定义是在 执行 initRender() 函数调用时生成的一个函数
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)

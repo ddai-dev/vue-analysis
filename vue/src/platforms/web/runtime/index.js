@@ -35,11 +35,15 @@ extend(Vue.options.components, platformComponents)
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
+// el 可以是字符串和 Dom 对象
+//   -  el && inBrowser query(el) 转换为 DOM
+//   - 在服务端渲染, 不需要 DOM , 所以 el = undefined
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
   el = el && inBrowser ? query(el) : undefined
+  // src/core/instance/lifecycle.js
   return mountComponent(this, el, hydrating)
 }
 

@@ -21,6 +21,17 @@ let uid = 0
  * A watcher parses an expression, collects dependencies,
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
+ * 
+ * 执行逻辑
+ * 1. 当实例化Watcher类时，会先执行其构造函数
+ * 2. 在构造函数中调用了this.get()实例方法
+ * 3. 在get()方法中，首先通过window.target = this把实例自身赋给了全局的一个唯一对象window.target上，
+ *    然后通过let value = this.getter.call(vm, vm)获取一下被依赖的数据，获取被依赖数据的目的是触发该数据上面的getter，
+ *    上文我们说过，在getter里会调用dep.depend()收集依赖，而在dep.depend()中取到挂载window.target上的值并将其存入依赖数组中，
+ *    在get()方法最后将window.target释放掉
+ * 4. 而当数据变化时，会触发数据的setter，在setter中调用了dep.notify()方法，在dep.notify()方法中，
+ *    遍历所有依赖(即watcher实例)，执行依赖的update()方法，也就是Watcher类中的update()实例方法，
+ *    在update()方法中调用数据变化的更新回调函数，从而更新视图
  */
 export default class Watcher {
   vm: Component;
@@ -79,6 +90,13 @@ export default class Watcher {
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
+      /**
+       * Parse simple path.
+       * 把一个形如'data.a.b.c'的字符串路径所表示的值，从真实的data对象中取出来
+       * 例如：
+       * data = {a:{b:{c:2}}}
+       * parsePath('a.b.c')(data)  // 2
+       */
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = function () {}

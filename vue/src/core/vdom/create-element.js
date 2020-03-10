@@ -23,6 +23,8 @@ import {
 const SIMPLE_NORMALIZE = 1
 const ALWAYS_NORMALIZE = 2
 
+// Virtual DOM 除了它的数据结构的定义，映射到真实的 DOM 实际上要经历 VNode 的 create、diff、patch 等过程
+// 本质上它还是返回了一个 VNode
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
 export function createElement (
@@ -57,6 +59,7 @@ export function _createElement (
       'Always create fresh vnode data objects in each render!',
       context
     )
+    // 创建一个注释节点
     return createEmptyVNode()
   }
   // object syntax in v-bind
@@ -87,15 +90,20 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+  // 不同的类型, 执行不同的 normalization   src/core/vdom/helpers/normalize-children.js
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
+    // 这个是编译的时候调用的 normalize children
     children = simpleNormalizeChildren(children)
   }
+  // 规范化 children 后，接下来会去创建一个 VNode 的实例
   let vnode, ns
+  // tag 标签不是字符串, 说明是组件
   if (typeof tag === 'string') {
     let Ctor
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+    // 如果是内置的一些节点，则直接创建一个普通 VNode
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       vnode = new VNode(
@@ -103,12 +111,14 @@ export function _createElement (
         undefined, undefined, context
       )
     } else if (isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
+      // 如果是为已注册的组件名，则通过 createComponent 创建一个组件类型的 VNode
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
+      // 未知情况
       vnode = new VNode(
         tag, data, children,
         undefined, undefined, context

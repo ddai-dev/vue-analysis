@@ -44,7 +44,9 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   Vue.delete = del
   Vue.nextTick = nextTick
 
-  Vue.options = Object.create(null)
+  // 设置 Vue.options 的值
+  Vue.options = Object.create(null) 
+  // 'component', 'directive', 'filter'
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
   })
@@ -53,6 +55,8 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   // components with in Weex's multi-instance scenarios.
   Vue.options._base = Vue
 
+  // 把内置组件扩展到 Vue.options.components 上 (eg: keep-alive transition transition-group)
+  // 这也就是为什么我们在其它组件中使用这些组件不需要注册的原因
   extend(Vue.options.components, builtInComponents)
 
   initUse(Vue)
