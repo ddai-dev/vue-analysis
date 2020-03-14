@@ -1,18 +1,24 @@
-# demo
 
-> A Vue.js project
+![](https://file.iviewui.com/vue-component-book.png)
 
-## Build Setup
+购买地址：[https://juejin.im/book/5bc844166fb9a05cd676ebca](https://juejin.im/book/5bc844166fb9a05cd676ebca)
 
-``` bash
-# install dependencies
+## Project setup
+```
 npm install
+```
 
-# serve with hot reload at localhost:8080
-npm run dev
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
 
-# build for production with minification
+### Compiles and minifies for production
+```
 npm run build
 ```
 
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+### Lints and fixes files
+```
+npm run lint
+```
