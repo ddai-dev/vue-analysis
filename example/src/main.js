@@ -14,5 +14,8 @@ new Vue({
     return {
       message: 'Hello Vue!'
     }
+  },
+  created(){
+    console.log('create')
   }
 })

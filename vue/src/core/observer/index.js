@@ -153,10 +153,10 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
-  // 依赖管理器
+  // 依赖管理器 (一个属性对象对应一个依赖管理器 )
   const dep = new Dep()
 
-  // 如果属性是不可以修改的, 那么久不能进行配置, 直接返回
+  // 如果属性是不可以修改的, 那么就不能进行配置, 直接返回
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return

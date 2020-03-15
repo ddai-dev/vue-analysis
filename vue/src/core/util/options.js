@@ -130,6 +130,26 @@ strats.data = function (
 }
 
 /**
+ * 声明周期调用的合并策略, 展开版本
+ *  function mergeHook (parentVal,childVal):  {
+ *  if (childVal) {
+ *    if (parentVal) {
+ *      // 如果 parentVal 就合并成数组, 那么久先调用 parent's hook and then invoke child's hook
+ *      return parentVal.concat(childVal)
+ *    } else {
+ *      if (Array.isArray(childVal)) {
+ *        return childVal
+ *      } else {
+ *        return [childVal]
+ *      }
+ *    }
+ *  } else {
+ *    return parentVal
+ *  }
+ * } 
+ * 
+ * 1. 如果 childVal不存在，就返回 parentVal
+ * 2.  
  * Hooks and props are merged as arrays.
  */
 function mergeHook (
@@ -144,7 +164,19 @@ function mergeHook (
         : [childVal]
     : parentVal
 }
-
+/** 
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed',
+  'activated',
+  'deactivated',
+  'errorCaptured'
+   */
 LIFECYCLE_HOOKS.forEach(hook => {
   strats[hook] = mergeHook
 })
@@ -388,6 +420,7 @@ export function mergeOptions (
   vm?: Component
 ): Object {
   if (process.env.NODE_ENV !== 'production') {
+    // 校验组件的名字是否合法
     checkComponents(child)
   }
 
@@ -404,7 +437,7 @@ export function mergeOptions (
   if (extendsFrom) {
     parent = mergeOptions(parent, extendsFrom, vm)
   }
-  // 递归把 mixins 合并到 parent
+  // 递归把 mixins, mixins 是一个数组, 合并到 parent
   if (child.mixins) {
     for (let i = 0, l = child.mixins.length; i < l; i++) {
       parent = mergeOptions(parent, child.mixins[i], vm)

@@ -46,10 +46,10 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 }
 
 /**
- * data 中可以使用 props
- * watch 中可以观察 data 和 props
- * 
- * 这 5 个对象中, 都不应该具有重名的属性对象
+ *  初始化了 vm 的 _watchers 属性
+ *  init props
+ *  init methods
+ *  init data 
  * 
  * @param {props methods data computed watch 是有顺序的} vm 
  */

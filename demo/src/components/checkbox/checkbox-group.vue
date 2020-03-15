@@ -39,6 +39,7 @@
                     });
                 }
             },
+            // 子元素的值修改, 来调用
             change (data) {
                 this.currentValue = data;
                 this.$emit('input', data);
@@ -47,6 +48,7 @@
             }
         },
         mounted () {
+            // 挂载时, 把 CheckboxGroup 的 value，赋值给 Checkbox 的 model
             this.updateModel(true);
         },
         watch: {

@@ -79,6 +79,7 @@ export function createPatchFunction (backend) {
   // nodeOps.createTextNode()在浏览器端等同于document.createTextNode()
   const { modules, nodeOps } = backend
 
+  // ['create', 'activate', 'update', 'remove', 'destroy']
   for (i = 0; i < hooks.length; ++i) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
@@ -131,6 +132,7 @@ export function createPatchFunction (backend) {
 
   let creatingElmInVPre = 0
 
+  // patch 会来调用
   function createElm (
     vnode,
     insertedVnodeQueue,
@@ -151,6 +153,7 @@ export function createPatchFunction (backend) {
     }
 
     vnode.isRootInsert = !nested // for transition enter check
+    // 尝试创建子组件, 成功返回 true
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
@@ -160,9 +163,11 @@ export function createPatchFunction (backend) {
     const tag = vnode.tag
     if (isDef(tag)) { // 有 tag 属性即认为是元素节点
       if (process.env.NODE_ENV !== 'production') {
+        // 合法性校验
         if (data && data.pre) {
           creatingElmInVPre++
         }
+        // 如果不是平台标签和注册标签
         if (isUnknownElement(vnode, creatingElmInVPre)) {
           warn(
             'Unknown custom element: <' + tag + '> - did you ' +
@@ -173,6 +178,7 @@ export function createPatchFunction (backend) {
         }
       }
 
+      // 去调用平台 DOM 的操作去创建一个占位符元素
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag) 
         : nodeOps.createElement(tag, vnode) // 创建元素节点
@@ -198,10 +204,15 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
+        // 
         createChildren(vnode, children, insertedVnodeQueue) // 创建元素节点的子节点
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
+        /** 
+         * 最后调用 insert 方法把 DOM 插入到父节点中，
+         * 因为是递归调用，子元素会优先调用 insert，所以整个 vnode 树节点的插入顺序是先子后父 
+         */
         insert(parentElm, vnode.elm, refElm) // 插入到DOM中
       }
 
@@ -296,6 +307,14 @@ export function createPatchFunction (backend) {
       }
     }
   }
+
+  /* function insertBefore (parentNode: Node, newNode: Node, referenceNode: Node) {
+    parentNode.insertBefore(newNode, referenceNode)
+  }
+  
+   function appendChild (node: Node, child: Node) {
+    node.appendChild(child)
+  } */
 
   function createChildren (vnode, children, insertedVnodeQueue) {
     if (Array.isArray(children)) {
@@ -723,8 +742,8 @@ export function createPatchFunction (backend) {
   }
 
   /** 
-   * oldVnode: 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象
-   * vnode: 表示执行 _render 后返回的 VNode 的节点
+   * oldVnode: 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象 (vm.$el)
+   * vnode: 表示执行 _render 后返回的 VNode 的节点 
    * hydrating: 表示是否是服务端渲染
    * removeOnly: 是给 transition-group 用的
    */

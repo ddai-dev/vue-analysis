@@ -30,10 +30,13 @@ export function initLifecycle (vm: Component) {
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
     }
+    // 确保在父组件能获取孩子组件
     parent.$children.push(vm)
   }
 
+  // 确保在子组件能获取父组件
   vm.$parent = parent
+  // 根
   vm.$root = parent ? parent.$root : vm
 
   vm.$children = []
@@ -65,7 +68,9 @@ export function lifecycleMixin (Vue: Class<Component>) {
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+    // 初始化渲染 prevVnode 为空
     if (!prevVnode) {
+      // core/vdom/patch
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
@@ -160,7 +165,7 @@ export function mountComponent (
   vm.$el = el
   // 没有指定 render 函数 (到这里说明 render 都是统一被转换后了, 如果没有转换, 生成警告, dev 报错)
   if (!vm.$options.render) {
-    // 创建一个空节点
+    // 创建一个空节点, 空节点的 render 渲染函数
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
@@ -215,7 +220,7 @@ export function mountComponent (
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
   // 两个作用:
-    // 一个是初始化的时候会执行回调函数
+    // 一个是初始化的时候会执行回调函数 (new 回调用一次 updateComponent)
     // 另一个是当 vm 实例中的监测的数据发生变化的时候执行回调函数
   new Watcher(vm, updateComponent, noop, {
     before () {
@@ -228,7 +233,7 @@ export function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
-  // 数最后判断为根节点的时候设置 vm._isMounted 为 true， 表示这个实例已经挂载了，同时执行 mounted 钩子函数
+  // 最后判断为根节点的时候设置 vm._isMounted 为 true， 表示这个实例已经挂载了，同时执行 mounted 钩子函数
   // vm.$vnode 表示 Vue 实例的父 VNode，所以它为 Null 则表示当前是根 Vue 的实例
   if (vm.$vnode == null) {
     vm._isMounted = true

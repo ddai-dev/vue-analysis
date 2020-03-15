@@ -45,7 +45,14 @@ export function createElement (
   }
   return _createElement(context, tag, data, children, normalizationType)
 }
-
+/**
+ * 
+ * @param {*} context Node 的上下文环境
+ * @param {*} tag 
+ * @param {*} data 
+ * @param {*} children 
+ * @param {*} normalizationType 
+ */
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -112,7 +119,7 @@ export function _createElement (
       )
     } else if (isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // 如果是为已注册的组件名，则通过 createComponent 创建一个组件类型的 VNode
-      // component
+      // component (src/core/vdom/create-component.js)
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
@@ -125,8 +132,12 @@ export function _createElement (
       )
     }
   } else {
-    // direct component options / constructor
-    vnode = createComponent(tag, data, context, children)
+    // new Vue({
+    //   el: '#app',
+    //   render: h => h(App) 这里的 tag shi  App(是一个对象)
+    // })
+    // direct component options / constructor (src/core/vdom/create-component.js)
+    vnode = createComponent(tag, data, context, children) // 本质创建出来的也是 vnode
   }
   if (Array.isArray(vnode)) {
     return vnode

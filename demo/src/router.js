@@ -6,6 +6,10 @@ Vue.use(Router)
 export default new Router({
     routes: [
         {
+            path: '/test',
+            component: () => import('./views/test.vue')
+        },
+        {
             path: '/form',
             component: () => import('./views/form.vue')
         },

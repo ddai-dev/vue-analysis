@@ -97,7 +97,16 @@ const componentVNodeHooks = {
 }
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
-
+/**
+ *  1. 构造子类构造函数
+ *  2. 安装组件钩子函数
+ *  3. 实例化 vnode
+ * @param {*} Ctor 
+ * @param {*} data 
+ * @param {*} context 
+ * @param {*} children 
+ * @param {*} tag 
+ */
 export function createComponent (
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
@@ -109,10 +118,21 @@ export function createComponent (
     return
   }
 
-  const baseCtor = context.$options._base
+  // src/core/global-api/index.js -> initGlobalAPI 有句话(Vue.options._base = Vue)
+  const baseCtor = context.$options._base 
 
   // plain options object: turn it into a constructor
+  /*
+   export default {
+    name: 'app',
+    components: {
+      HelloWorld
+    }
+  } */
   if (isObject(Ctor)) {
+    // 其实就是 Vue.extend(Ctor), baseCtor 其实就是 Vue
+    // src/core/global-api/extend.js
+    // 把 Ctor 对象转换为 Vue 的子类
     Ctor = baseCtor.extend(Ctor)
   }
 
@@ -183,10 +203,18 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // data.hook= {
+  //   init: Fn,
+  //   prepatch: Fn,
+  //   insert: Fn,
+  //   destroy: Fn,
+  // }
   installComponentHooks(data)
 
   // return a placeholder vnode
   const name = Ctor.options.name || tag
+  // 注意和普通元素节点的 vnode 不同，组件的 vnode 是没有 children 
+  // vue-component-1-app 区别不同的组件
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
     data, undefined, undefined, undefined, context,
@@ -220,9 +248,14 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+  // Vue.extend 做的事， 调用子组件
   return new vnode.componentOptions.Ctor(options)
 }
 
+/**
+ * 合同策略, 如果 hook 存在, 并且不相等, 那么合并 Hook, 其实就是依次执行这两个钩子函数即可
+ * @param {i} data 
+ */
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {

@@ -65,16 +65,18 @@ export function addHandler (
     )
   }
 
-  // check capture modifier
+  // check capture modifier 判断是否有capture修饰符
   if (modifiers.capture) {
     delete modifiers.capture
     name = '!' + name // mark the event as captured
   }
+  // 判断是否有once修饰符
   if (modifiers.once) {
     delete modifiers.once
     name = '~' + name // mark the event as once
   }
   /* istanbul ignore if */
+  // 判断是否有passive修饰符
   if (modifiers.passive) {
     delete modifiers.passive
     name = '&' + name // mark the event as passive
@@ -93,6 +95,20 @@ export function addHandler (
   }
 
   let events
+  // 判断事件是一个浏览器原生事件还是自定义事件
+/*   
+<child @select="selectHandler" 	@click.native="clickHandler"></child>
+  el.events = {
+    select: {
+      value: 'selectHandler'
+    }
+  }
+  
+  el.nativeEvents = {
+    click: {
+      value: 'clickHandler'
+    }
+  } */
   if (modifiers.native) {
     delete modifiers.native
     events = el.nativeEvents || (el.nativeEvents = {})

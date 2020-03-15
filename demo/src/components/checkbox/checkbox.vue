@@ -49,6 +49,7 @@
         data () {
             return {
                 currentValue: this.value,
+                // 在父组件初始化时 mounted, 会把对应的 child.mode 设置上
                 model: [],
                 group: false,
                 parent: null,
@@ -79,6 +80,7 @@
                 const value = checked ? this.trueValue : this.falseValue;
                 this.$emit('input', value);
 
+                // 如果在组合模式下, 事件的派发由父元素来
                 if (this.group) {
                     this.parent.change(this.model);
                 } else {
@@ -92,6 +94,7 @@
         },
         watch: {
             value (val) {
+                // 判断父元素修改的值, 是否合法
                 if (val === this.trueValue || val === this.falseValue) {
                     this.updateModel();
                 } else {

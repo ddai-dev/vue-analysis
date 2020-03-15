@@ -2,7 +2,7 @@
     <div>
         <h3>组合多选框组件——CheckboxGroup & Checkbox</h3>
 
-        <i-checkbox v-model="single">单独选项</i-checkbox>
+        <i-checkbox v-model="single" @on-change="handleChange">单独选项</i-checkbox>
 
         <br>
         数据：{{ single }}
@@ -30,6 +30,10 @@
             return {
                 single: false,
                 multiple: ['option1']
+            }
+        },
+        methods: {
+            handleChange(e){
             }
         }
     }

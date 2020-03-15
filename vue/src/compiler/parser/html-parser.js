@@ -55,6 +55,23 @@ function decodeAttr (value, shouldDecodeNewlines) {
   return value.replace(re, match => decodingMap[match])
 }
 
+
+/**
+ *  template 解析模板    options 解析模板需要的选项 
+ *  四个钩子函数, 根据不同的内容做不同解析
+ * - start 当解析到标签的开始位置时，触发start
+ * - end
+ * - chars
+ * - comment
+ *
+ *  - 通常模板内会包含如下内容
+ *  - 文本，例如“难凉热血”
+ *  - HTML注释，例如<!-- 我是注释 -->
+ *  - 条件注释，例如<!-- [if !IE]> -->我是注释<!--< ![endif] -->
+ *  - DOCTYPE，例如<!DOCTYPE html>
+ *  - 开始标签，例如<div>
+ *  - 结束标签，例如</div> 
+*/
 export function parseHTML (html, options) {
   const stack = []
   const expectHTML = options.expectHTML
@@ -65,17 +82,22 @@ export function parseHTML (html, options) {
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
+    // 确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
       if (textEnd === 0) {
         // Comment:
         if (comment.test(html)) {
+          // 若为注释，则继续查找是否存在'-->'
           const commentEnd = html.indexOf('-->')
 
           if (commentEnd >= 0) {
+            // 若存在 '-->',继续判断options中是否保留注释
             if (options.shouldKeepComment) {
+              // 若保留注释，则把注释截取出来传给options.comment，创建注释类型的AST节点
               options.comment(html.substring(4, commentEnd))
             }
+              // 若不保留注释，则将游标移动到'-->'之后，继续向后解析
             advance(commentEnd + 3)
             continue
           }
@@ -119,7 +141,10 @@ export function parseHTML (html, options) {
       }
 
       let text, rest, next
+      // '<' 不在第一个位置，文本开头
       if (textEnd >= 0) {
+        // 如果html字符串不是以'<'开头,说明'<'前面的都是纯文本，无需处理
+       // 那就把'<'以后的内容拿出来赋给rest
         rest = html.slice(textEnd)
         while (
           !endTag.test(rest) &&
@@ -128,20 +153,30 @@ export function parseHTML (html, options) {
           !conditionalComment.test(rest)
         ) {
           // < in plain text, be forgiving and treat it as text
+          /**
+           * 用'<'以后的内容rest去匹配endTag、startTagOpen、comment、conditionalComment
+           * 如果都匹配不上，表示'<'是属于文本本身的内容
+           */
+        // 在'<'之后查找是否还有'<'
           next = rest.indexOf('<', 1)
+          // 如果没有了，表示'<'后面也是文本
           if (next < 0) break
+          // 如果还有，表示'<'是文本中的一个字符
           textEnd += next
           rest = html.slice(textEnd)
         }
+        // '<'是结束标签的开始 ,说明从开始到'<'都是文本，截取出来
         text = html.substring(0, textEnd)
         advance(textEnd)
       }
 
+      // 整个模板字符串里没有找到`<`,说明整个模板字符串都是文本
       if (textEnd < 0) {
         text = html
         html = ''
       }
 
+      // 把截取出来的text转化成textAST
       if (options.chars && text) {
         options.chars(text)
       }
@@ -188,6 +223,7 @@ export function parseHTML (html, options) {
 
   function parseStartTag () {
     const start = html.match(startTagOpen)
+      // '<div></div>'.match(startTagOpen)  => ['<div','div',index:0,input:'<div></div>']
     if (start) {
       const match = {
         tagName: start[1],
@@ -196,10 +232,25 @@ export function parseHTML (html, options) {
       }
       advance(start[0].length)
       let end, attr
+      /**
+       * <div a=1 b=2 c=3></div>
+       * 从<div之后到开始标签的结束符号'>'之前，一直匹配属性attrs
+       * 所有属性匹配完之后，html字符串还剩下
+       * 自闭合标签剩下：'/>'
+       * 非自闭合标签剩下：'></div>'
+      */
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
         advance(attr[0].length)
         match.attrs.push(attr)
       }
+      /**
+       * 这里判断了该标签是否为自闭合标签
+       * 自闭合标签如:<input type='text' />
+       * 非自闭合标签如:<div></div>
+       * '></div>'.match(startTagClose) => [">", "", index: 0, input: "></div>", groups: undefined]
+       * '/><div></div>'.match(startTagClose) => ["/>", "/", index: 0, input: "/><div></div>", groups: undefined]
+       * 因此，我们可以通过end[1]是否是"/"来判断该标签是否是自闭合标签
+       */
       if (end) {
         match.unarySlash = end[1]
         advance(end[0].length)
@@ -210,8 +261,8 @@ export function parseHTML (html, options) {
   }
 
   function handleStartTag (match) {
-    const tagName = match.tagName
-    const unarySlash = match.unarySlash
+    const tagName = match.tagName // 开始标签的标签名
+    const unarySlash = match.unarySlash  // 是否为自闭合标签的标志，自闭合为"",非自闭合为"/"
 
     if (expectHTML) {
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
@@ -222,33 +273,37 @@ export function parseHTML (html, options) {
       }
     }
 
-    const unary = isUnaryTag(tagName) || !!unarySlash
+    const unary = isUnaryTag(tagName) || !!unarySlash  // 布尔值，标志是否为自闭合标签
 
-    const l = match.attrs.length
+    const l = match.attrs.length  // match.attrs 数组的长度
     const attrs = new Array(l)
     for (let i = 0; i < l; i++) {
-      const args = match.attrs[i]
+      // const args = ["class="a"", "class", "=", "a", undefined, undefined, index: 0, input: "class="a" id="b"></div>", groups: undefined]
+      const args = match.attrs[i] // 每个属性对象
       // hackish work around FF bug https://bugzilla.mozilla.org/show_bug.cgi?id=369778
       if (IS_REGEX_CAPTURING_BROKEN && args[0].indexOf('""') === -1) {
         if (args[3] === '') { delete args[3] }
         if (args[4] === '') { delete args[4] }
         if (args[5] === '') { delete args[5] }
       }
+      // 在代码中尝试取args的args[3]、args[4]、args[5]，如果都取不到，则给value复制为空
       const value = args[3] || args[4] || args[5] || ''
       const shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
         ? options.shouldDecodeNewlinesForHref
         : options.shouldDecodeNewlines
       attrs[i] = {
         name: args[1],
-        value: decodeAttr(value, shouldDecodeNewlines)
+        value: decodeAttr(value, shouldDecodeNewlines)  // 一个与match.attrs数组长度相等的数组
       }
     }
 
+    // 如果该标签是非自闭合标签，则将标签推入栈中
     if (!unary) {
       stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs })
       lastTag = tagName
     }
 
+    // 标签是自闭合标签，现在就可以调用start钩子函数并传入处理好的参数来创建AST节点了
     if (options.start) {
       options.start(tagName, attrs, unary, match.start, match.end)
     }

@@ -3,6 +3,9 @@
         <div id="nav">
             <ul>
                 <li>
+                    <router-link to="/test">test</router-link>
+                </li>
+                <li>
                     <router-link to="/form">实战 1：具有数据校验功能的表单组件 —— Form</router-link>
                 </li>
                 <li>

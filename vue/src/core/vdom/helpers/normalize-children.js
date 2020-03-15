@@ -33,7 +33,8 @@ export function simpleNormalizeChildren (children: any) {
 // with hand-written render functions / JSX. In such cases a full normalization
 // is needed to cater to all possible types of children values.
 /**
- * - render 函数是用户手写的, 当 children 只有一个节点的时候，Vue.js 从接口层面允许用户把 children 写成基础类型用来创建单个简单的文本节点，这种情况会调用 createTextVNode 创建一个文本节点的 VNode 
+ * - render 函数是用户手写的, 当 children 只有一个节点的时候，Vue.js 从接口层面允许用户把 children 写成基础类型用来创建单个简单的文本节点
+ *   ，这种情况会调用 createTextVNode 创建一个文本节点的 VNode 
  * - 另一个场景是当编译 slot、v-for 的时候会产生嵌套数组的情况，会调用 normalizeArrayChildren 方法 
  */
 export function normalizeChildren (children: any): ?Array<VNode> {

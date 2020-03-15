@@ -18,7 +18,6 @@ import { warn } from '../util/index'
  * - 模板编译阶段：将模板编译成渲染函数
  * - 挂载阶段：将实例挂载到指定的DOM上，即将模板渲染到真实DOM中；
  * - 销毁阶段：将实例自身从父组件中删除，并取消依赖追踪及事件监听
- *   
  * 
  */
 function Vue (options) {
@@ -31,11 +30,11 @@ function Vue (options) {
   this._init(options)
 }
 
-// add Vue.prototype._init method
-initMixin(Vue)
-stateMixin(Vue)
-eventsMixin(Vue)
-lifecycleMixin(Vue)
-renderMixin(Vue)
+// Mixin 在原型链的身上增加一些 fn
+initMixin(Vue)         // Vue.prototype._init
+stateMixin(Vue)        // $data $props $set $delete $watch
+eventsMixin(Vue)       // $on $once $off $emit
+lifecycleMixin(Vue)    // _update  $forceUpdate  $destroy
+renderMixin(Vue)       // $nextTick _render 
 
 export default Vue

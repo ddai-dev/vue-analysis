@@ -18,6 +18,7 @@ const idToTemplate = cached(id => {
 // 缓存原型上面的 $mount 方法, 然后重新定义
 // 原型上的 $mount 在 src/platform/web/runtime/index.js 定义, 
 // 之所以这么设计完全是为了复用 (delegate design pattern)，因为它(Vue.prototype.$mount)是可以被 runtime only 版本的 Vue 直接使用的
+// compiler 环境, 需要生成 render
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,

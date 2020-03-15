@@ -14,11 +14,14 @@ let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
   /* 
-  * 合并配置
-  * 初始化生命周期 
-  * 初始化事件中心
-  * 初始化渲染
-  * 初始化 (data props computed watcher)
+   * merge options
+   * init Lifecyle
+   * init Events
+   * init Render
+   * init Injection
+   * init State
+   * init Provide
+   * mount option variable el
   */
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
@@ -46,6 +49,7 @@ export function initMixin (Vue: Class<Component>) {
       vm.$options = mergeOptions(
         // 简单理解为返回 vm.constructor.options (Vue.options 在 initGlobalAPI(Vue)的时候定义的 ) 
         // src/core/global-api/index.js
+          // 包含 components directives  filters _base 属性
         resolveConstructorOptions(vm.constructor),
         options || {},
         vm

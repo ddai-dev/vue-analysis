@@ -60,6 +60,7 @@ export function createASTElement (
 
 /**
  * Convert HTML string to AST.
+
  */
 export function parse (
   template: string,
@@ -114,6 +115,8 @@ export function parse (
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
+    // tag 标签  attrs 属性  unary 标签是否自闭合
+    // 内部会调用createASTElement函数来创建元素类型的AST节点
     start (tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
@@ -221,6 +224,7 @@ export function parse (
       }
     },
 
+    // 当解析到结束标签时调用end函数
     end () {
       // remove trailing whitespace
       const element = stack[stack.length - 1]
@@ -234,6 +238,7 @@ export function parse (
       closeElement(element)
     },
 
+    // 当解析到文本时调用chars函数生成文本类型的AST节点
     chars (text: string) {
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
@@ -279,6 +284,7 @@ export function parse (
         }
       }
     },
+    // 当解析到注释时调用comment函数生成注释类型的AST节点
     comment (text: string) {
       currentParent.children.push({
         type: 3,

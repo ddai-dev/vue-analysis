@@ -50,9 +50,11 @@
                 this.splitCode();
 
                 if (this.html !== '' && this.js !== '') {
+                    // new Function ([arg1[, arg2[, ...argN]],] functionBody)
                     const parseStrToFunc = new Function(this.js)();
 
                     parseStrToFunc.template =  this.html;
+                    debugger
                     const Component = Vue.extend( parseStrToFunc );
                     this.component = new Component().$mount();
 
