@@ -26,3 +26,6 @@ Dep 被观察者
 hydrating 是与服务端渲染相关, 可以把他忽略不计
 
 import vue -> core/index.js -> initGlobalAPI(Vue) 
+
+
+vdom https://segmentfault.com/a/1190000014641724
